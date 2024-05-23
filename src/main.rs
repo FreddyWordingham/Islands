@@ -11,12 +11,15 @@ use islands::prelude::*;
 fn main() {
     App::new()
         .add_plugins((
-            DefaultPlugins,
+            DefaultPlugins.set(ImagePlugin::default_nearest()),
             Material2dPlugin::<CustomMaterial>::default(),
         ))
+        .init_resource::<PerlinNoise>()
         .add_systems(Startup, setup)
         .add_systems(Update, bevy::window::close_on_esc)
-        .add_systems(Update, check_spacebar)
+        // .add_systems(Update, check_spacebar)
+        .add_systems(Update, generate_terrain)
+        .add_systems(Update, randomise_terrain)
         .run();
 }
 
@@ -30,12 +33,12 @@ fn setup(
     // Camera
     commands.spawn(Camera2dBundle::default());
 
-    // Load or create the texture
+    // // Load or create the texture
     // let texture_handle = asset_server.load("textures/blank.png");
 
     // If you need to create a texture dynamically
-    let width = 256;
-    let height = 256;
+    let width = 128;
+    let height = 128;
     let texture_size = Extent3d {
         width,
         height,
@@ -63,48 +66,10 @@ fn setup(
     commands.spawn((
         MaterialMesh2dBundle {
             mesh: meshes.add(Mesh::from(Rectangle::new(1.0, 1.0))).into(),
-            transform: Transform::default().with_scale(Vec3::splat(200.0)),
+            transform: Transform::default().with_scale(Vec3::splat(400.0)),
             material: materials.add(CustomMaterial::new(Some(texture_handle))),
             ..Default::default()
         },
-        Terrain,
+        Canvas,
     ));
-}
-
-fn check_spacebar(
-    query: Query<&Handle<CustomMaterial>>,
-    mut material_handle: ResMut<Assets<CustomMaterial>>,
-    mut texture_handle: ResMut<Assets<Image>>,
-    keyboard_input: Res<ButtonInput<KeyCode>>,
-) {
-    if keyboard_input.just_pressed(KeyCode::Space) {
-        for material in query.iter() {
-            let material_id = material.id();
-            let material = material_handle.get_mut(material_id).unwrap();
-
-            let texture_id = material.quad_texture.as_ref().unwrap().id();
-            let texture = texture_handle.get_mut(texture_id).unwrap();
-
-            draw_horizontal_line(texture, 128);
-        }
-        println!("Spacebar pressed");
-    }
-}
-
-fn draw_horizontal_line(image: &mut Image, y: u32) {
-    let width = image.texture_descriptor.size.width;
-    let height = image.texture_descriptor.size.height;
-    let channels = 4; // Assuming RGBA8 format
-
-    if y >= height {
-        return; // Out of bounds check
-    }
-
-    for x in 0..width {
-        let idx = (y * width + x) as usize * channels;
-        image.data[idx] = 150; // Red
-        image.data[idx + 1] = 150; // Green
-        image.data[idx + 2] = 150; // Blue
-        image.data[idx + 3] = 150; // Alpha
-    }
 }
