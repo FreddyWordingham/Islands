@@ -4,6 +4,7 @@ use bevy::{
         Extent3d, TextureDescriptor, TextureDimension, TextureFormat, TextureUsages,
     },
     sprite::{Material2dPlugin, MaterialMesh2dBundle},
+    window::Cursor,
 };
 
 use islands::prelude::*;
@@ -11,13 +12,23 @@ use islands::prelude::*;
 fn main() {
     App::new()
         .add_plugins((
-            DefaultPlugins.set(
-                // ImagePlugin::default_nearest(),
-                AssetPlugin {
+            DefaultPlugins
+                // .set(ImagePlugin::default_nearest())
+                .set(AssetPlugin {
                     watch_for_changes_override: Some(true),
                     ..Default::default()
-                },
-            ),
+                })
+                .set(WindowPlugin {
+                    primary_window: Some(Window {
+                        title: "Islands".to_string(),
+                        cursor: Cursor {
+                            visible: false,
+                            ..Default::default()
+                        },
+                        ..Default::default()
+                    }),
+                    ..Default::default()
+                }),
             Material2dPlugin::<CustomMaterial>::default(),
         ))
         .add_systems(Startup, setup)
