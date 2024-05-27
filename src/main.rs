@@ -11,7 +11,13 @@ use islands::prelude::*;
 fn main() {
     App::new()
         .add_plugins((
-            DefaultPlugins.set(ImagePlugin::default_nearest()),
+            DefaultPlugins.set(
+                // ImagePlugin::default_nearest(),
+                AssetPlugin {
+                    watch_for_changes_override: Some(true),
+                    ..Default::default()
+                },
+            ),
             Material2dPlugin::<CustomMaterial>::default(),
         ))
         .add_systems(Startup, setup)
@@ -20,6 +26,8 @@ fn main() {
         .add_event::<RegenerateTerrain>()
         .add_event::<RedrawTerrain>()
         .add_systems(Update, input_events)
+        // .add_systems(Update, print_mouse_position)
+        .add_systems(Update, update_sun_position)
         .add_systems(Update, regenerate_terrain.after(input_events))
         .add_systems(Update, redraw_colour_map.after(regenerate_terrain))
         .add_systems(Update, redraw_height_map.after(regenerate_terrain))
@@ -32,7 +40,7 @@ fn setup(
     mut materials: ResMut<Assets<CustomMaterial>>,
     // asset_server: Res<AssetServer>,
     mut images: ResMut<Assets<Image>>,
-    // mut events: EventWriter<RegenerateTerrain>,
+    mut events: EventWriter<RegenerateTerrain>,
 ) {
     // Camera
     commands.spawn(Camera2dBundle::default());
@@ -89,7 +97,7 @@ fn setup(
     commands.spawn((
         MaterialMesh2dBundle {
             mesh: meshes.add(Mesh::from(Rectangle::new(1.0, 1.0))).into(),
-            transform: Transform::default().with_scale(Vec3::splat(400.0)),
+            transform: Transform::default().with_scale(Vec3::new(RENDER_WIDTH, RENDER_HEIGHT, 0.0)),
             material: materials.add(CustomMaterial::new(
                 Some(height_map_handle),
                 Some(colour_map_handle),
@@ -99,6 +107,6 @@ fn setup(
         Canvas,
     ));
 
-    // // Generate terrain
-    // events.send(RegenerateTerrain);
+    // Generate terrain
+    events.send(RegenerateTerrain);
 }
